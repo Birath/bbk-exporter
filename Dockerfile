@@ -1,4 +1,4 @@
-FROM alpine as build
+FROM alpine AS build
 
 RUN apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main \
     g++ \
@@ -12,12 +12,12 @@ ADD https://github.com/dotse/bbk.git /bbk
 RUN cd bbk/src/cli && \
     make -j $(nproc)
 
-ADD ./bbk_exporter /bbk_exporter
+ADD . /bbk_exporter
 RUN cd /bbk_exporter && \
     cargo build --release && \
     cargo install --path . --root /
 
-FROM alpine as bbk-exporter
+FROM alpine AS bbk-exporter
 
 RUN apk add --no-cache \
     libstdc++ \
