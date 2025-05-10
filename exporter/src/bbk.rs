@@ -66,7 +66,7 @@ pub struct Bbk {
 
 impl Bbk {
     pub fn run_bbk(&self) -> Result<BbkOutput, BbkError> {
-        let default_args = ["--csv", "--speedlimit=1", "--duration=1"].map(|s| s.to_owned());
+        let default_args = ["--csv", "--log=/tmp/bbk.log"].map(|s| s.to_owned());
         let args = Vec::from_iter(self.args.iter().cloned().chain(default_args));
 
         println!("Running BBK with arguments: {:?}", args);
