@@ -60,8 +60,8 @@ impl FromStr for BbkOutput {
 
 #[derive(Debug, Clone)]
 pub struct Bbk {
-   pub path: PathBuf,
-   pub args: Vec<String>,
+    pub path: PathBuf,
+    pub args: Vec<String>,
 }
 
 impl Bbk {

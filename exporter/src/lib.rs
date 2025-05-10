@@ -13,34 +13,35 @@ use hyper::{Method, Request, Response, StatusCode};
 use hyper_util::rt::TokioIo;
 use hyper_util::server::conn::auto;
 use lazy_static::lazy_static;
-use prometheus::{
-    Encoder, GaugeVec, TextEncoder, register_gauge_vec,
-};
+use prometheus::{Encoder, GaugeVec, TextEncoder, register_gauge_vec};
 
 pub mod bbk;
 
 lazy_static! {
     static ref DOWNLOAD_SPEED_GAUGE_VEC: GaugeVec = register_gauge_vec!(
-        "bbk_download_speed",
-        "Download speed in Mbps",
-        &["server", "isp"]
+        "bbk_download_speed_mbps",
+        "Download speed in Mbit/s",
+        &["server", "network_operator"]
     )
     .unwrap();
     static ref UPLOAD_SPEED_GAUGE_VEC: GaugeVec = register_gauge_vec!(
-        "bbk_upload_speed",
-        "Upload speed in Mbps",
-        &["server", "isp"]
+        "bbk_upload_speed_mbps",
+        "Upload speed in Mbit/s",
+        &["server", "network_operator"]
     )
     .unwrap();
-    static ref PING_GAUGE_VEC: GaugeVec =
-        register_gauge_vec!("bbk_ping", "Ping in ms", &["server", "isp"]).unwrap();
-
+    static ref PING_GAUGE_VEC: GaugeVec = register_gauge_vec!(
+        "bbk_latency_ms",
+        "Latency to test server in ms",
+        &["server", "network_operator"]
+    )
+    .unwrap();
     static ref BBK_PATH: PathBuf = PathBuf::from("bbk");
 }
 
 #[derive(Debug, Clone)]
 struct ExporterContext {
-    bbk_config: Bbk
+    bbk_config: Bbk,
 }
 
 async fn metrics(
@@ -106,7 +107,6 @@ fn internal_server_error() -> Response<BoxBody<Bytes, hyper::Error>> {
         .unwrap()
 }
 
-
 fn full<T: Into<Bytes>>(chunk: T) -> BoxBody<Bytes, hyper::Error> {
     Full::new(chunk.into())
         .map_err(|never| match never {})
@@ -126,29 +126,30 @@ where
     }
 }
 
-pub async fn run_exporter(serving_port: u16, bbk: PathBuf, bbk_args: Vec<String>) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+pub async fn run_exporter(
+    serving_port: u16,
+    bbk: PathBuf,
+    bbk_args: Vec<String>,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     println!("Starting BBK exporter on port {}", serving_port);
     let context = Arc::new(ExporterContext {
         bbk_config: Bbk {
             path: bbk,
-            args: bbk_args
-        }
+            args: bbk_args,
+        },
     });
     let addr = SocketAddr::from(([0, 0, 0, 0], serving_port));
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    
+
     loop {
         let context = context.clone();
-        let service = service_fn(move |req| {
-            handle(context.as_ref().to_owned(), req)
-        });
+        let service = service_fn(move |req| handle(context.as_ref().to_owned(), req));
         let (stream, _) = listener.accept().await?;
 
         let io = TokioIo::new(stream);
 
         tokio::task::spawn(async move {
-           
             if let Err(err) = auto::Builder::new(TokioExecutor)
                 .serve_connection(io, service)
                 .await
@@ -158,5 +159,3 @@ pub async fn run_exporter(serving_port: u16, bbk: PathBuf, bbk_args: Vec<String>
         });
     }
 }
-
-
