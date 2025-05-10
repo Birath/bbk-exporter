@@ -126,15 +126,15 @@ where
     }
 }
 
-pub async fn run_exporter(serving_port: u16, bbk: PathBuf) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+pub async fn run_exporter(serving_port: u16, bbk: PathBuf, bbk_args: Vec<String>) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     println!("Starting BBK exporter on port {}", serving_port);
     let context = Arc::new(ExporterContext {
         bbk_config: Bbk {
             path: bbk,
-            args: Vec::new()
+            args: bbk_args
         }
     });
-    let addr = SocketAddr::from(([127, 0, 0, 1], serving_port));
+    let addr = SocketAddr::from(([0, 0, 0, 0], serving_port));
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
     
