@@ -30,9 +30,6 @@ jobs:
             "${{ env.EXPORTER_SRC_PATH }}/target"
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions/checkout@v4
-      - name: Build binaries in "${{ matrix.BUILD_TARGET }}" mode
-        working-directory: "./${{ env.EXPORTER_SRC_PATH }}"
-        run: cargo build --profile ${{ matrix.BUILD_TARGET }}
       - name: Run tests in "${{ matrix.BUILD_TARGET }}" mode
         working-directory: "./${{ env.EXPORTER_SRC_PATH }}"
         run: cargo test --profile ${{ matrix.BUILD_TARGET }}
