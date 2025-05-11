@@ -14,7 +14,6 @@ RUN cd bbk/src/cli && \
 
 ADD exporter /bbk_exporter
 RUN cd /bbk_exporter && \
-    cargo build --release && \
     cargo install --path . --root /
 
 FROM alpine AS bbk-exporter
